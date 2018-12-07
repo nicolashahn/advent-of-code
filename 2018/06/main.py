@@ -6,6 +6,7 @@ def dist(x1y1, x2y2):
     return abs(x1 - x2) + abs(y1 - y2)
 
 
+# Part 1
 with open('in.txt', 'r') as f:
     # create coordinate: value map
     coords = [(int(x), int(y)) for x, y in
@@ -47,5 +48,28 @@ with open('in.txt', 'r') as f:
     matrix_1d = [x for x in matrix_1d if x not in infinite and x != -1]
     ctr = Counter(matrix_1d)
 
-    # Part 1
     print(max(ctr.values()))
+
+# Part 2
+with open('in.txt', 'r') as f:
+    # create coordinate: value map
+    coords = [(int(x), int(y)) for x, y in
+              [l.split(',') for l in f.readlines()]]
+    cmap = {xy: i + 1 for i, xy in enumerate(coords)}
+
+    # generate 2d matrix
+    width = max(coords, key=lambda c: c[0])[0]
+    height = max(coords, key=lambda c: c[1])[1]
+    matrix = [[0 for x in range(width + 2)]
+              for y in range(height + 2)]
+
+    in_region = 0
+    for y in range(len(matrix)):
+        for x in range(len(matrix[0])):
+            total = 0
+            for x2y2 in cmap.keys():
+                total += dist((x, y), x2y2)
+            if total < 10000:
+                in_region += 1
+
+    print(in_region)
