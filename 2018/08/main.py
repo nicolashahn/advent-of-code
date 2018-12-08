@@ -9,8 +9,8 @@ def get_nodes(nums):
         metas.append(nums.pop(0))
     return {'childs': childs, 'metas': metas}
 
-def total_metas(node, total=0):
-    total += sum(node['metas'])
+def total_metas(node):
+    total = sum(node['metas'])
     for child in node['childs']:
         total += total_metas(child)
     return total
