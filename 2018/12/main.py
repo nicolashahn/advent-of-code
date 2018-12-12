@@ -1,10 +1,4 @@
 def step(state, offset, rules):
-    # if '#' in state[:4]:
-        # state = ['.'] * 4 + state
-        # offset += 4
-        # new_state = ['.'] * 4
-    # if '#' in state[-2:]:
-        # state += ['.'] * 4
     new_state = ['.', '.']
     for i in range(2, len(state) - 2):
         five = ''.join(state[i - 2:i + 3])
@@ -48,12 +42,10 @@ with open('in.txt', 'r') as f:
                  if line.split()[2] == '#'])
     last_score = score(state, offset)
     for gen in range(1000):
-        # print(''.join(state))
         state = step(state, offset, rules)
         new_score = score(state, offset)
         print(gen, new_score, last_score, new_score - last_score)
         last_score = new_score
-    # print(''.join(state))
 
     print(score(state, offset))
 
