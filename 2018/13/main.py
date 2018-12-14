@@ -1,3 +1,5 @@
+from collections import Counter
+
 # Possible turns
 LEFT = 'LEFT'
 STRAIGHT = 'STRAIGHT'
@@ -86,20 +88,29 @@ assert turn('>', LEFT) == '^'
 assert turn('<', RIGHT) == '^'
 
 
+def check_collisions(cars):
+    xys = [c.xy for c in cars]
+    crashed_cars = [c for c in cars if xys.count(c.xy) > 1]
+    return crashed_cars
+
+
 def tick(cars, map):
     """Advance all cars, check for crashes. Returns:
     (x, y, None) if there is a crash at (x,y)
     (None, None, updated cars) if there isn't
     """
     cars = sorted(cars, key=lambda c: c.xy)
+    crashed = []
     for car in cars:
         x, y = car.xy
         xv, yv = DIR_VEC_MAP[car.dir]
         nextx, nexty = x + xv, y + yv
-        # TODO check for collision here
-        car_xys = {c.xy for c in cars if c is not car}
-        if (nextx, nexty) in car_xys:
-            return nextx, nexty
+        new_crashed = check_collisions(cars)
+        if new_crashed:
+            crashed += new_crashed
+        # car_xys = {c.xy for c in cars if c is not car}
+        # if (nextx, nexty) in car_xys:
+            # return nextx, nexty
         tile = map[nexty][nextx]
         if tile == '/':
             car.dir = FWD_SLASH_MAP[car.dir]
@@ -110,7 +121,8 @@ def tick(cars, map):
             car.dir = new_dir
             car.turn_idx = (car.turn_idx + 1) % 3
         car.xy = (nextx, nexty)
-    return None, None
+    cars = [car for car in cars if car not in crashed]
+    return None, None, cars
 
 
 def print_map_with_cars(cars, map):
@@ -131,6 +143,11 @@ with open('in.txt', 'r') as f:
     cars, map = get_and_replace_cars(map)
     x, y = None, None
     while not x:
-        x, y = tick(cars, map)
+        x, y, cars = tick(cars, map)
+        if len(cars) < 2:
+            break
     # Part 1
-    print(x, y)
+    # print(x, y)
+
+    # Part 2
+    print(cars[0].xy)
