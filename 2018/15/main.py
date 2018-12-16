@@ -10,8 +10,10 @@ HP = 200
 AP = 3
 
 
-def m_dist(x1, y1, x2, y2):
+def m_dist(xy1, xy2):
     """ Manhattan distance. """
+    x1, y1 = xy1
+    x2, y2 = xy2
     return abs(x1 - x2) + abs(y1 - y2)
 
 
@@ -27,6 +29,10 @@ class Unit:
         self.y = y
         self.rounds = 0
         self.alive = True
+
+    def __repr__(self):
+        return "<{}({}) at {}>".format(
+            self.race, self.hp, self.xy)
 
     def hit(self, ap):
         """
@@ -138,13 +144,23 @@ class Sim:
         Have a unit step towards the nearest enemy unit, update its coordinates
         in self.units.
         """
-        in_range = self.get_in_range(unit)
-        nearests = self.get_nearests(unit, in_range)
-        print(nearests)
-        if nearests:
-            nearests = sorted(nearests)
-            x, y = self.step_toward(*nearests[0])
-            unit.move(x, y)
+        if not self.adjacent_to_enemy(unit):
+            in_range = self.get_in_range(unit)
+            target_xy = self.get_target_tile(unit, in_range)
+            if target_xy:
+                print(target_xy, unit)
+                next_step_xy = self.get_next_step(unit, target_xy)
+                if next_step_xy:
+                    unit.move(*next_step_xy)
+
+    def adjacent_to_enemy(self, unit):
+        """ Return True if unit is next to an enemy unit. """
+        enemy_race = GOBLIN if unit.race == ELF else ELF
+        enemy_xys = [enemy.xy for enemy in self.live_units(race=enemy_race)]
+        for enemy_xy in enemy_xys:
+            if m_dist(enemy_xy, unit.xy) == 1:
+                return True
+        return False
 
     def get_in_range(self, unit):
         """
@@ -180,29 +196,75 @@ class Sim:
                     adjacents.append((x, y))
         return adjacents
 
-    def get_nearests(self, unit, in_range):
+    def get_target_tile(self, unit, in_range):
         """
-        Of the coordinates in in_range, return the nearest ones reachable by
-        the unit.
+        First finds reachable target coords via BFS, and selects the coord that
+        is nearest in reading order.
         """
+        if not in_range:
+            return None
+
         queue = [(0, unit.xy)]
         seen = set()
+        # list of (dist, (x, y))
         reachables = []
+
         while queue:
             dist, xy = queue.pop(0)
             if xy not in seen:
+                seen.add(xy)
                 if xy in in_range:
                     reachables.append((dist + 1, xy))
-                adjs = [(dist + 1, adj) for adj in self.get_open_adjacents(*xy)]
-                seen.add(xy)
-                queue += adjs
+                adjs = self.get_open_adjacents(*xy)
+                dist_adjs = [(dist + 1, adj) for adj in adjs]
+                queue += dist_adjs
+
         sorted_reachables = sorted(reachables)
         nearests = [xy for d, xy in sorted_reachables
                     if d == sorted_reachables[0][0]]
-        return nearests
 
-    def step_toward(self, unit, x, y):
-        pass
+        if nearests:
+            nearests = self.sort_reading_order(nearests)
+            xy = nearests[0]
+            return xy
+
+    @staticmethod
+    def sort_reading_order(xys):
+        return list(sorted(xys, key=lambda xy: (xy[1], xy[0])))
+
+    def get_next_step(self, unit, target_xy):
+        """
+        Find the adjacent tile to the unit which is closest to the target tile.
+        If there are multiple, return the first one in reading order.
+        """
+        possible_steps = self.get_open_adjacents(*unit.xy)
+        dist_steps = sorted([(self.path_dist(target_xy, step), step)
+                             for step in possible_steps])
+        best_steps = [step for dist, step in dist_steps
+                      if dist == dist_steps[0][0]]
+        print(best_steps, target_xy)
+        best_step = self.sort_reading_order(best_steps)[0]
+        return best_step
+
+    def path_dist(self, xy1, xy2):
+        """
+        Lenth of shortest path from first to second coord traveling through
+        the map.
+        """
+        dists = {xy1: 0}
+        queue = [xy1]
+        seen = set()
+        while queue:
+            xy = queue.pop(0)
+            if xy not in seen:
+                seen.add(xy)
+                for adj in self.get_open_adjacents(*xy):
+                    if adj not in dists or dists[adj] > dists[xy] + 1:
+                        dists[adj] = dists[xy] + 1
+                    queue.append(adj)
+        if xy2 in dists:
+            return dists[xy2]
+        return float('inf')
 
 
 def main():
