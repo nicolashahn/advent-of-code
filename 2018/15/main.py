@@ -28,20 +28,16 @@ class Unit:
         self.x = x
         self.y = y
         self.rounds = 0
-        self.alive = True
 
     def __repr__(self):
-        return "<{}({}) at {}>".format(
-            self.race, self.hp, self.xy)
+        return "{}({})".format(self.race, self.hp)
+
+    @property
+    def alive(self):
+        return self.hp > 0
 
     def hit(self, ap):
-        """
-        Hit this unit for `ap` units of damage. Update alive state if out of
-        hp.
-        """
         self.hp -= ap
-        if self.hp <= 0:
-            self.alive = False
 
     @property
     def xy(self):
@@ -81,6 +77,10 @@ class Sim:
         goblins = {unit.yx for unit in self.live_units(GOBLIN)}
         elves = {unit.yx for unit in self.live_units(ELF)}
         for y in range(len(self.map)):
+            row_units = sorted(
+                [unit for unit in self.live_units() if unit.y == y],
+                key=lambda u: u.x
+            )
             for x in range(len(self.map[0])):
                 if (y, x) in goblins:
                     to_display.append(GOBLIN)
@@ -88,6 +88,8 @@ class Sim:
                     to_display.append(ELF)
                 else:
                     to_display.append(self.map[y][x])
+            if row_units:
+                to_display += list("   " + str(row_units))
             to_display.append("\n")
         print(''.join(to_display))
 
@@ -119,48 +121,53 @@ class Sim:
         Run the simulation until all units of one type are eliminated.
         Returns the answer to part 1: (# of rounds * sum of HP of units left)
         """
-        while not self.has_ended:
-            self.round()
-            if self.rounds == 5: break
-        hps = sum([unit.hp for unit in self.units])
+        self.display()
+        while True:
+            ended = self.round()
+            if ended:
+                break
+            self.rounds += 1
+            print(self.rounds)
+            self.display()
+        self.display()
+        hps = sum([unit.hp for unit in self.live_units()])
         return hps * self.rounds
 
     def round(self):
         """
         All units move and attack once. Updates self.units and increments
-        self.rounds.
+        self.rounds. Returns whether the simulation has ended this round.
         """
-        self.display()
         ordered_units = sorted(self.live_units(), key=lambda u: u.yx)
         for unit in ordered_units:
-            if unit.rounds == self.rounds:
+            if unit.rounds <= self.rounds and unit.alive:
                 self.move(unit)
-                # target = self.get_target(unit)
-                # target.hit(unit.ap)
-        self.rounds += 1
+                self.attack(unit)
+            if self.has_ended:
+                return True
+        return False
 
     def move(self, unit):
         """
         Have a unit step towards the nearest enemy unit, update its coordinates
         in self.units.
         """
-        if not self.adjacent_to_enemy(unit):
+        if not self.adjacent_enemies(unit):
             in_range = self.get_in_range(unit)
             target_xy = self.get_target_tile(unit, in_range)
             if target_xy:
-                print(target_xy, unit)
                 next_step_xy = self.get_next_step(unit, target_xy)
                 if next_step_xy:
                     unit.move(*next_step_xy)
 
-    def adjacent_to_enemy(self, unit):
-        """ Return True if unit is next to an enemy unit. """
+    def adjacent_enemies(self, unit):
+        """
+        Return the enemy units adjacent to this unit.
+        """
         enemy_race = GOBLIN if unit.race == ELF else ELF
-        enemy_xys = [enemy.xy for enemy in self.live_units(race=enemy_race)]
-        for enemy_xy in enemy_xys:
-            if m_dist(enemy_xy, unit.xy) == 1:
-                return True
-        return False
+        enemies = self.live_units(race=enemy_race)
+        return [enemy for enemy in enemies
+                if m_dist(enemy.xy, unit.xy) == 1]
 
     def get_in_range(self, unit):
         """
@@ -242,7 +249,6 @@ class Sim:
                              for step in possible_steps])
         best_steps = [step for dist, step in dist_steps
                       if dist == dist_steps[0][0]]
-        print(best_steps, target_xy)
         best_step = self.sort_reading_order(best_steps)[0]
         return best_step
 
@@ -265,6 +271,16 @@ class Sim:
         if xy2 in dists:
             return dists[xy2]
         return float('inf')
+
+    def attack(self, unit):
+        """
+        Get enemies adjacent to this unit, and if there are any, attack the one
+        with the lowest hp. Break a tie with reading order.
+        """
+        ordered_enemies = sorted(self.adjacent_enemies(unit),
+                                 key=lambda e: (e.hp, e.yx))
+        if ordered_enemies:
+            ordered_enemies[0].hit(unit.ap)
 
 
 def main():
