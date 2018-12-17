@@ -7,7 +7,8 @@ WALL = '#'
 OPEN = '.'
 RACES = (ELF, GOBLIN)
 HP = 200
-AP = 3
+G_AP = 3
+E_AP = 14
 
 
 def m_dist(xy1, xy2):
@@ -24,7 +25,7 @@ class Unit:
         assert race in RACES
         self.race = race
         self.hp = HP
-        self.ap = AP
+        self.ap = G_AP if race == GOBLIN else E_AP
         self.x = x
         self.y = y
         self.rounds = 0
@@ -38,6 +39,9 @@ class Unit:
 
     def hit(self, ap):
         self.hp -= ap
+        if self.race == ELF and not self.alive:
+            print("elf died")
+            exit()
 
     @property
     def xy(self):
@@ -291,7 +295,6 @@ def main():
         lines = f.readlines()
         sim = Sim(lines)
         result = sim.run()
-        # Part 1
         print(result)
 
 
