@@ -135,7 +135,7 @@ assert eqrr(0, 1, 2, [2, 3, 0, 0]) == [2, 3, 0, 0]
 assert eqrr(0, 1, 2, [3, 3, 0, 0]) == [3, 3, 1, 0]
 
 
-all_ops = [
+ALL_OPS = [
     addr,
     addi,
     mulr,
@@ -155,15 +155,14 @@ all_ops = [
 ]
 
 
-with open('in.txt', 'r') as f:
-    lines = [line.strip() for line in f.readlines()]
+def p1(lines):
     total_ct = 0
     for i in range(0, 3160, 4):
         instruction = [int(c) for c in lines[i+1].split()]
         after = eval(lines[i+2][8:])
         valid_ops = []
-        for op in all_ops:
-            _, a, b, c = instruction
+        _, a, b, c = instruction
+        for op in ALL_OPS:
             before = eval(lines[i][8:])
             if op(a, b, c, before) == after:
                 valid_ops.append(op.__name__)
@@ -171,7 +170,41 @@ with open('in.txt', 'r') as f:
             total_ct += 1
         # print(instruction, before, after)
         # print(valid_ops)
-
-    # Part 1
     print(total_ct)
 
+
+def p2(lines):
+    opcode_map = {i: ALL_OPS[::] for i in range(16)}
+    for i in range(0, 3160, 4):
+        instruction = [int(c) for c in lines[i+1].split()]
+        after = eval(lines[i+2][8:])
+        valid_ops = []
+        opcode, a, b, c = instruction
+        for op in ALL_OPS:
+            before = eval(lines[i][8:])
+            if op(a, b, c, before) == after:
+                valid_ops.append(op)
+        opcode_map[opcode] = [op for op in opcode_map[opcode]
+                              if op in valid_ops]
+    uq_opcode_map = {}
+    while len(uq_opcode_map) < len(ALL_OPS):
+        for opcode, ops in opcode_map.items():
+            if len(ops) == 1:
+                uq_opcode_map[opcode] = ops[0]
+        uq_ops = uq_opcode_map.values()
+        for opcode, ops in opcode_map.items():
+            opcode_map[opcode] = [op for op in ops if op not in uq_ops]
+
+    instructions = [[int(n) for n in line.split()]
+                    for line in lines[3162:]]
+    regs = [0, 0, 0, 0]
+    for ins in instructions:
+        opcode, a, b, c = ins
+        uq_opcode_map[opcode](a, b, c, regs)
+    print(regs[0])
+
+
+with open('in.txt', 'r') as f:
+    lines = [line.strip() for line in f.readlines()]
+    p1(lines)
+    p2(lines)
