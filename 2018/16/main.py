@@ -113,6 +113,7 @@ def eqir(a, b, c, regs):
 
 assert eqir(0, 1, 2, [2, 3, 0, 0]) == [2, 3, 0, 0]
 assert eqir(3, 1, 2, [4, 3, 0, 0]) == [4, 3, 1, 0]
+assert eqir(2, 2, 2, [0, 0, 2, 3]) == [0, 0, 1, 3]
 
 
 def eqri(a, b, c, regs):
@@ -122,6 +123,7 @@ def eqri(a, b, c, regs):
 
 assert eqri(0, 1, 2, [2, 3, 0, 0]) == [2, 3, 0, 0]
 assert eqri(0, 4, 2, [4, 3, 0, 0]) == [4, 3, 1, 0]
+assert eqri(2, 2, 2, [0, 0, 2, 3]) == [0, 0, 1, 3]
 
 
 def eqrr(a, b, c, regs):
@@ -157,18 +159,19 @@ with open('in.txt', 'r') as f:
     lines = [line.strip() for line in f.readlines()]
     total_ct = 0
     for i in range(0, 3160, 4):
-        before = [int(c) for c in lines[i][9:-1].split(', ')]
-        operation = [int(c) for c in lines[i+1].split()]
-        after = [int(c) for c in lines[i+2][9:-1].split(', ')]
+        instruction = [int(c) for c in lines[i+1].split()]
+        after = eval(lines[i+2][8:])
         valid_ops = []
         for op in all_ops:
-            _, a, b, c = operation
+            _, a, b, c = instruction
+            before = eval(lines[i][8:])
             if op(a, b, c, before) == after:
                 valid_ops.append(op.__name__)
         if len(valid_ops) >= 3:
             total_ct += 1
-        else:
-            print(before, operation, after)
-            print(valid_ops)
+        # print(instruction, before, after)
+        # print(valid_ops)
+
+    # Part 1
     print(total_ct)
 
