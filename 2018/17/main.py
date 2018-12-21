@@ -1,7 +1,7 @@
 import re
+import sys
 
-
-XOFFSET = None
+sys.setrecursionlimit(9001)
 
 
 def display(grid, water):
@@ -9,22 +9,23 @@ def display(grid, water):
     for y in range(len(grid)):
         row = []
         for x in range(len(grid[0])):
-            ox, oy = (x + XOFFSET, y + 1)
-            if (ox, oy) in water:
-                row.append('~')
+            if (x, y) in water:
+                if water[(x,y)]:
+                    row.append('v')
+                else:
+                    row.append('o')
             else:
                 row.append(grid[y][x])
         out.append(''.join(row))
-    print('\n'.join(out))
+    print('\n'.join(out) + '\n')
 
 
 def valid(grid, x, y):
-    ox, oy = (x - XOFFSET, y - 1)
     if (
-            0 <= ox < len(grid[0]) and
-            0 <= oy < len(grid)
+            0 <= x < len(grid[0]) and
+            0 <= y < len(grid)
     ):
-        return grid[ox][oy] != '#'
+        return grid[y][x] != '#'
     return False
 
 
@@ -39,26 +40,36 @@ def get_neighbors(grid, src_xy):
 
 
 def drip(grid, xy):
-    water = set()
+    water = {}
 
     def inner(grid, xy, water):
+        # display(grid, water)
         x, y = xy
         if y == len(grid):
             # means we hit the bottom
             return True
-        if y < len(grid) and xy not in water:
-            water.add(xy)
-            if valid(grid, x, y+1):
-                if inner(grid, (x, y+1), water):
-                    return True
-            # l_bot = False
-            # if valid(grid, x-1, y):
-                # if inner(grid, (x-1, y), water):
-                    # l_bot = True
-            # if valid(grid, x+1, y):
-                # if inner(grid, (x+1, y), water):
-                    # if l_bot: return True
+        if not valid(grid, *xy):
+            return False
+        if xy not in water:
+            water[xy] = water.get((x, y + 1), False)
+            if water[xy]:
+                return True
+            if inner(grid, (x, y + 1), water):
+                water[xy] = True
+                return True
+            left = inner(grid, (x + 1, y), water)
+            if left:
+                lx = x
+                while (lx, y) in water:
+                    water[(lx, y)] = True
+                    lx -= 1
+            right = inner(grid, (x - 1, y), water)
+            water[xy] = left or right  # or (x, y + 1) in water
+            return water[xy]
+        return water[xy]
+
     inner(grid, xy, water)
+    del water[xy]
     return water
 
 
@@ -75,19 +86,19 @@ def p1(lines):
     minx = min([x for x, y in clay_xys])
     maxx = max([x for x, y in clay_xys])
     maxy = max([y for x, y in clay_xys])
+    miny = min([y for x, y in clay_xys])
     grid = [['.' for _ in range(minx, maxx + 3)]
-            for _ in range(maxy + 1)]
-    global XOFFSET
+            for _ in range(miny - 5, maxy + 1)]
     XOFFSET = minx - 1
     for x, y in clay_xys:
         grid[y][x - XOFFSET] = '#'
     grid[0][500 - XOFFSET] = '+'
-    water = drip(grid, (500, 0))
-    print(water)
+    water = drip(grid, (500 - XOFFSET, miny - 1))
     display(grid, water)
+    # print(water)
+    print(len(water))
 
 
-
-with open('tiny_in.txt', 'r') as f:
+with open('in.txt', 'r') as f:
     lines = f.readlines()
     p1(lines)
