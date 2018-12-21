@@ -64,6 +64,11 @@ def drip(grid, xy):
                     water[(lx, y)] = True
                     lx -= 1
             right = inner(grid, (x - 1, y), water)
+            if right:
+                lx = x
+                while (lx, y) in water:
+                    water[(lx, y)] = True
+                    lx += 1
             water[xy] = left or right  # or (x, y + 1) in water
             return water[xy]
         return water[xy]
@@ -97,6 +102,8 @@ def p1(lines):
     display(grid, water)
     # print(water)
     print(len(water))
+    # Part 2
+    print(len([v for v in water.values() if not v]))
 
 
 with open('in.txt', 'r') as f:
