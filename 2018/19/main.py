@@ -170,6 +170,53 @@ def p1(lines):
     print(regs[0])
 
 
+# This was just me experimenting with changing registers at runtime
+def p2_helper(lines):
+    ip = int(lines[0].split(' ')[1])
+    regs = [1, 0, 0, 0, 0, 0]
+    # regs = [0, 0, 0, 0, 0, 0]
+    instructions = [line.split() for line in lines[1:]]
+    old0 = old1 = 0
+    ctr = 0
+    while regs[ip] < len(instructions):
+        inst = instructions[regs[ip]]
+        if regs[ip] in (4,):
+        # if regs[0] != old0 or regs[1] != old1:
+            print('{:10d} {:2d} {:12s} {}'.format(
+                ctr, regs[ip], ' '.join(inst), regs))
+            # old0 = regs[0]
+            # old1 = regs[1]
+            # __import__('pdb').set_trace()
+            if regs[4] < 5:
+                regs[4] = 5
+                continue
+            if regs[4] < 17:
+                continue
+                regs[4] = 17
+            if regs[4] < 124133:
+                regs[4] = 124133
+                continue
+            if regs[4] < 10551305:
+                regs[4] = 10551305
+            # regs[1] = 10551305
+            # regs[4] += 10000
+            # regs[1] += 100
+        op, a, b, c = [inst[0]] + [int(x) for x in inst[1:]]
+        regs = OP_MAP[op](a, b, c, regs)
+        regs[ip] += 1
+        ctr += 1
+    print(regs)
+    print(regs[0])
+
+
+# After I figured out that it was doing sum of factors
+def p2(n):
+    facs = [x for x in range(1, n+1) if n % x == 0]
+    return (sum(facs))
+
+
 with open('in.txt', 'r') as f:
     lines = f.readlines()
-    p1(lines)
+    # p1(lines)
+    # p2_helper(lines)
+    print(p2(10551305))
