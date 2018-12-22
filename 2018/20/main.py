@@ -37,7 +37,7 @@ def walk(start_xy, dirs, doors):
             xy = new_xy
 
 
-def get_farthest(start_xy, doors):
+def get_dists(start_xy, doors):
     queue = [(start_xy, 0)]
     seen = set()
     dists = {start_xy: 0}
@@ -50,10 +50,10 @@ def get_farthest(start_xy, doors):
             seen.add(xy)
             for nxy in doors[xy]:
                 queue.append((nxy, dists[xy] + 1))
-    return max(dists.values())
+    return dists
 
 
-def p1(line):
+def get_dists_from_line(line):
     line = list(
         line[1:-1]
         .replace('(', '((')
@@ -62,9 +62,13 @@ def p1(line):
     dirs = parse(line)
     doors = defaultdict(list)
     walk((0, 0), dirs, doors)
-    farthest = get_farthest((0, 0), doors)
-    print(farthest)
+    return get_dists((0, 0), doors)
+
 
 with open('in.txt', 'r') as f:
     line = f.readlines()[0].strip()
-    p1(line)
+    dists = get_dists_from_line(line)
+    # Part 1
+    print(max(dists.values()))
+    # Part 2
+    print(len([x for x in dists.values() if x >= 1000]))
