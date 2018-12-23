@@ -159,21 +159,29 @@ OP_MAP = {
 def p1(lines):
     ip = int(lines[0].split(' ')[1])
     regs = [0, 0, 0, 0, 0, 0]
-    regs[0] = 2884703
+    regs[0] = 0
     instructions = [line.split() for line in lines[1:]]
     ctr = 0
+    seen = set()
+    last = None
     while regs[ip] < len(instructions):
         inst = instructions[regs[ip]]
         if regs[ip] == 28:
+            # Answer to part 1 is register 5 when this prints the first time
             print('{:10d} {:2d} {:18s} {}'.format(
                 ctr, regs[ip], ' '.join(inst), regs))
+            if regs[5] in seen:
+                # Part 2
+                print(last)
+                break
+            seen.add(regs[5])
+            last = regs[5]
         # if ctr == 10000:
             # break
         op, a, b, c = [inst[0]] + [int(x) for x in inst[1:]]
         regs = OP_MAP[op](a, b, c, regs)
         regs[ip] += 1
         ctr += 1
-    print(ctr)
 
 
 with open('in.txt', 'r') as f:
