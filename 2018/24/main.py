@@ -1,4 +1,5 @@
 import re
+import copy
 from dataclasses import dataclass
 
 IMM = 'Immune System'
@@ -38,7 +39,7 @@ class Group:
         `other` group attacks this group.
         """
         dam = other.would_damage(self)
-        killed = dam // self.hp
+        killed = min(self.units, dam // self.hp)
         self.units -= killed
         return killed
 
@@ -91,26 +92,32 @@ def round(groups):
     atk_order = sorted(attacking.keys(),
                        key=lambda a: a.initiative,
                        reverse=True)
+    total_killed = 0
     for attacker in atk_order:
         defender = attacking[attacker]
         killed = defender.attacked_by(attacker)
         # print("{} attacks {}, {} units killed".format(
             # attacker.id, defender.id, killed))
+        total_killed += killed
+    if total_killed == 0:
+        return True, groups
 
     # bring out your dead
     groups = [g for g in groups if g.alive]
     # print(list(sorted([g.units for g in groups])))
 
+    if ended(groups):
+        return True, groups
+
     # print("end round")
-    return groups
+    return False, groups
 
 
 def get_groups(lines):
     groups = []
     army = IMM
     g_id = 1
-    while lines:
-        line = lines.pop(0)
+    for line in lines:
         if IMM in line:
             continue
         if INF in line:
@@ -155,15 +162,32 @@ def get_groups(lines):
 
 def p1(lines):
     groups = get_groups(lines)
-    # for group in groups:
-        # print(group)
-    # exit()
-    while not ended(groups):
-        groups = round(groups)
+    over = False
+    while not over:
+        over, groups = round(groups)
     units = sum([g.units for g in groups])
     print(units)
+
+
+def p2(lines):
+    boost = 1
+    while True:
+        groups = get_groups(lines)
+        for group in groups:
+            if group.army == IMM:
+                group.ap += boost
+        over = False
+        while not over:
+            over, groups = round(groups)
+        if all([g.army == IMM for g in groups]):
+            units = sum([g.units for g in groups])
+            print(units)
+            break
+        else:
+            boost += 1
 
 
 with open('in.txt', 'r') as f:
     lines = f.readlines()
     p1(lines)
+    p2(lines)
