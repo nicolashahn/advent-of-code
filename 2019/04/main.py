@@ -11,7 +11,7 @@ def is_pw1(n):
 
 def is_pw2(n):
     sn = str(n)
-    streaks = []
+    has2 = False
     curr = 1
     for i, d in enumerate(sn[:-1]):
         if d > sn[i + 1]:
@@ -19,17 +19,13 @@ def is_pw2(n):
         if d == sn[i + 1]:
             curr += 1
         else:
-            streaks.append(curr)
+            has2 = curr == 2 or has2
             curr = 1
-    streaks.append(curr)
-    return 2 in streaks
+    return has2 or curr == 2
 
 
 def num_pws(lo, hi, pw_f):
-    ct = 0
-    for n in range(lo, hi + 1):
-        ct += 1 if pw_f(n) else 0
-    return ct
+    return sum([1 if pw_f(n) else 0 for n in range(lo, hi + 1)])
 
 
 def main():
