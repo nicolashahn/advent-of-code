@@ -20,7 +20,6 @@ def orbits(m):
     total = 0
     while q:
         n, ct = q.popleft()
-        print(n, ct)
         total += ct
         seen.add(n)
         for c in m[n]:
@@ -43,11 +42,50 @@ K)L""".split()
 assert orbits(build(tdata)) == 42
 
 
+def dist(m):
+    rm = {}
+    for k, vs in m.items():
+        for v in vs:
+            rm[v] = k
+    paths = []
+    for start in ("YOU", "SAN"):
+        curr = start
+        path = []
+        while True:
+            path.append(curr)
+            if curr not in rm:
+                break
+            curr = rm[curr]
+        paths.append(path)
+    a, b = paths
+    while a[-1] == b[-1]:
+        a.pop()
+        b.pop()
+    return len(a + b) - 2
+
+
+tdata2 = """COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+K)YOU
+I)SAN""".split()
+assert dist(build(tdata2)) == 4
+
+
 def main():
     with open("in.txt", "r") as f:
         pairs = f.readlines()
         m = build(pairs)
-        print(orbits(m))
+        # print(orbits(m))
+        print(dist(m))
 
 
 if __name__ == "__main__":
