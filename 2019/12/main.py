@@ -79,20 +79,18 @@ assert lcm([18, 28, 44]) == 2772
 
 def p2(pos):
     vel = [[0, 0, 0] for _ in pos]
-    seens = [set()] * 3
+    inits = [[p[i] for p in pos] + [v[i] for v in vel] for i in range(3)]
     pers = [None, None, None]
     i = 0
     while True:
         sim(pos, vel)
+        i += 1
         for j in range(3):
-            xs = tuple([p[j] for p in pos] + [v[j] for v in vel])
-            if xs in seens[j] and pers[j] is None:
+            xs = [p[j] for p in pos] + [v[j] for v in vel]
+            if xs == inits[j] and pers[j] is None:
                 pers[j] = i
-            else:
-                seens[j].add(xs)
         if all(pers):
             return lcm(pers)
-        i += 1
 
 
 assert p2(test[:]) == 2772
