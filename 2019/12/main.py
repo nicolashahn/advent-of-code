@@ -52,11 +52,50 @@ def parse_in(raw):
     ]
 
 
-test = """<x=-1, y=0, z=2>
+test = parse_in(
+    """<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>"""
-assert p1(parse_in(test), 10) == 179
+)
+assert p1(test[:], 10) == 179
+
+
+def lcm(ns):
+    i = 2
+    while i < max(ns):
+        if all([n % i == 0 for n in ns]):
+            ns = [n // i for n in ns]
+        else:
+            i += 1
+    ans = 1
+    for n in ns:
+        ans *= n
+    return ans
+
+
+assert lcm([18, 28, 44]) == 2772
+
+
+def p2(pos):
+    vel = [[0, 0, 0] for _ in pos]
+    seens = [set()] * 3
+    pers = [None, None, None]
+    i = 0
+    while True:
+        sim(pos, vel)
+        for j in range(3):
+            xs = tuple([p[j] for p in pos] + [v[j] for v in vel])
+            if xs in seens[j] and pers[j] is None:
+                pers[j] = i
+            else:
+                seens[j].add(xs)
+        if all(pers):
+            return lcm(pers)
+        i += 1
+
+
+assert p2(test[:]) == 2772
 
 
 def main():
@@ -64,8 +103,9 @@ def main():
 <x=0, y=-3, z=-13>
 <x=-15, y=10, z=-11>
 <x=-3, y=-8, z=3>"""
-    _in = parse_in(raw)
-    print(p1(_in, 1000))
+    pos = parse_in(raw)
+    # print(p1(pos[:], 1000))
+    print(p2(pos[:]))
 
 
 if __name__ == "__main__":
