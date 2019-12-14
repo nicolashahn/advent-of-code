@@ -2,9 +2,9 @@ import math
 from collections import Counter
 
 
-def prod(n, mat, store, g):
+def prod(rn, mat, store, g):
     """
-    n:     number of material to produce
+    rn:    required number of material to produce
     mat:   desired material to produce
     store: global Counter of materials we already have (mutable)
     g:     global graph of ingredient requirements (immutable)
@@ -12,12 +12,12 @@ def prod(n, mat, store, g):
     return: number of ORE required
     """
     # number produced per batch, ingredient dict {material: # required}
-    np, ings = g[mat]
+    bn, ings = g[mat]
     # number of batches required to get to n materials
-    b = math.ceil(float(n - store[mat]) / float(np))
+    b = math.ceil(float(rn - store[mat]) / float(bn))
     # base case, the single ingredient is ORE
     if len(ings) == 1 and "ORE" in ings:
-        store[mat] += np * b
+        store[mat] += bn * b
         return ings["ORE"] * b
     # recursively produce intermediate materials until we have enough for b batches,
     # this is a while loop because producing one ingredient can use resources needed for
@@ -30,7 +30,7 @@ def prod(n, mat, store, g):
     # subtract ingredients from, add desired material to store
     for imat, ni in ings.items():
         store[imat] -= ni * b
-    store[mat] += np * b
+    store[mat] += bn * b
     return ore
 
 
