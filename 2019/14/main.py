@@ -2,51 +2,56 @@ import math
 from collections import Counter
 
 
-def prod(n, mat, has, g):
+def prod(n, mat, store, g):
     """
     n:     number of material to produce
-    mat:   material to produce
-    has:   global Counter of materials we already have (mutable)
+    mat:   desired material to produce
+    store: global Counter of materials we already have (mutable)
     g:     global graph of ingredient requirements (immutable)
 
     return: number of ORE required
     """
+    # number produced per batch, ingredient dict {material: # required}
     np, ings = g[mat]
-    ings = ings[:]
+    # number of batches required to get to n materials
+    b = math.ceil(float(n - store[mat]) / float(np))
+    # base case, the single ingredient is ORE
+    if len(ings) == 1 and "ORE" in ings:
+        store[mat] += np * b
+        return ings["ORE"] * b
+    # recursively produce intermediate materials until we have enough for b batches,
+    # this is a while loop because producing one ingredient can use resources needed for
+    # another
     ore = 0
-    b = math.ceil(float(n - has[mat]) / float(np))
-    if len(ings) == 1 and ings[0][1] == "ORE":
-        has[mat] += np * b
-        ore += ings[0][0] * b
-        return ore
-    while any([has[imat] < ni * b for ni, imat in ings]):
-        for ni, imat in ings:
-            while has[imat] < ni * b:
-                ore += prod(ni * b, imat, has, g)
-    for ni, imat in ings:
-        has[imat] -= ni * b
-    has[mat] += np * b
+    while any([store[imat] < ni * b for imat, ni in ings.items()]):
+        for imat, ni in ings.items():
+            if store[imat] < ni * b:
+                ore += prod(ni * b, imat, store, g)
+    # subtract ingredients from, add desired material to store
+    for imat, ni in ings.items():
+        store[imat] -= ni * b
+    store[mat] += np * b
     return ore
 
 
 def p1(g):
-    has = Counter()
-    ans = prod(1, "FUEL", has, g)
-    return ans
+    return prod(1, "FUEL", Counter(), g)
 
 
 def p2(g):
+    # number of FUEL we know we can produce
     base = 0
-    fn = 1
+    # number of FUEL on top of base we're attempting to produce
+    n = 1
     while True:
-        ore = prod(base + fn, "FUEL", Counter(), g)
+        ore = prod(base + n, "FUEL", Counter(), g)
         if ore > 1000000000000:
-            if fn == 1:
+            if n == 1:
                 break
-            fn = 1
+            n = 1
         else:
-            base += fn
-            fn *= 2
+            base += n
+            n *= 2
     return base
 
 
@@ -62,11 +67,11 @@ def parse_in(raw):
     for line in raw.split("\n"):
         left, right = line.split("=>")
         pairs = left.split(",")
-        ings = []
+        ings = {}
         for p in pairs:
-            ings.append(parse_pair(p))
+            n, m = parse_pair(p)
+            ings[m] = n
         num, res = parse_pair(right)
-        assert res not in g
         g[res] = (num, ings)
     return g
 
@@ -173,8 +178,8 @@ def main():
     tests()
     with open("in.txt", "r") as f:
         g = parse_in(f.read().strip())
-        # print(p1(g))
-        print(p2(g))
+        assert p1(g) == 201324
+        assert p2(g) == 6326857
 
 
 if __name__ == "__main__":
