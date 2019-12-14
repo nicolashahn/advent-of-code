@@ -19,14 +19,13 @@ def prod(n, mat, has, g):
         has[mat] += np * b
         ore += ings[0][0] * b
         return ore
-    while has[mat] < n:
-        while any([has[imat] < ni for ni, imat in ings]):
-            for ni, imat in ings:
-                while has[imat] < ni:
-                    ore += prod(ni, imat, has, g)
+    while any([has[imat] < ni * b for ni, imat in ings]):
         for ni, imat in ings:
-            has[imat] -= ni
-        has[mat] += np
+            while has[imat] < ni * b:
+                ore += prod(ni * b, imat, has, g)
+    for ni, imat in ings:
+        has[imat] -= ni * b
+    has[mat] += np * b
     return ore
 
 
@@ -37,25 +36,18 @@ def p1(g):
 
 
 def p2(g):
-    has = Counter()
-    ore = 0
-    fuel = 0
+    base = 0
     fn = 1
     while True:
-        phas = has.copy()
-        batch = prod(fn, "FUEL", has, g)
-        ore += batch
-        print(ore, batch)
+        ore = prod(base + fn, "FUEL", Counter(), g)
         if ore > 1000000000000:
-            fuel -= fn
             if fn == 1:
                 break
             fn = 1
-            has = phas
-        fuel += fn
-        fn *= 2
-        has["FUEL"] = 0
-    return fuel
+        else:
+            base += fn
+            fn *= 2
+    return base
 
 
 def parse_pair(p):
