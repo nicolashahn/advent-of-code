@@ -161,18 +161,16 @@ def printgrid(grid, cx, cy):
 
 def explore(out, grid):
     cx, cy = 0, 0
-    seen = {(0, 0)}
     stack = [(0, 0)]
     while True:
         adjs = [
             (d, (cx + dx, cy + dy))
             for d, (dx, dy) in DIRS.items()
-            if (cx + dx, cy + dy) not in seen
+            if (cx + dx, cy + dy) not in grid
         ]
         if adjs:
             mv, (nx, ny) = adjs[0]
             stack.append((nx, ny))
-            seen.add((nx, ny))
         else:
             stack.pop()
             if not stack:
