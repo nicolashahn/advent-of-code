@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 def execute(prog, in_gen):
     """ Generator, yields output """
 
@@ -136,6 +139,7 @@ def printgrid(grid, inters=None):
         inters = []
     maxx = max([x for x, y in grid])
     maxy = max([y for x, y in grid])
+    print(maxx, maxy)
     for y in range(maxy + 1):
         row = ""
         for x in range(maxx + 1):
@@ -172,11 +176,67 @@ def p1(prog):
     return sum([x * y for x, y in inters])
 
 
+R = "R"
+L = "L"
+
+
+def p2(prog):
+    # hand-transcribed T_T
+    path = eval(
+        """[L,10,R,12,R,12,R,6,R,10,L,10,L,10,R,12,R,12,R,10,L,10,L,12,R,6,R,6,
+        R,10,L,10,R,10,L,10,L,12,R,6,R,6,R,10,L,10,R,10,L,10,L,12,R,6,L,10,R,
+        12,R,12,R,10,L,10,L,12,R,6]"""
+    )
+    ipath = []
+    for e in path:
+        if isinstance(e, int):
+            ipath += [1 for _ in range(e)]
+        else:
+            ipath.append(e)
+    pairs = []
+    for i in range(0, len(path), 2):
+        pairs.append(tuple(path[i : i + 2]))
+    uqpairs = list(set(pairs))
+    encoding = []
+    for p in pairs:
+        encoding.append(uqpairs.index(p))
+    """
+    print(encoding)
+    [2, 0, 0, 4, 1, 2, 2, 0, 0, 1, 2, 3, 4, 4, 1, 2, 1, 2, 3, 4, 4, 1, 2,
+     1, 2, 3, 4, 2, 0, 0, 1, 2, 3, 4]
+    """
+    A = [2, 0, 0]
+    B = [4, 1, 2]
+    C = [1, 2, 3, 4]
+    main = ["A", "B", "A", "C", "B", "C", "B", "C", "A", "C"]
+    # enter input to program
+    _in = []
+    for f in main:
+        _in.append(ord(f))
+        _in.append(ord(","))
+    _in.pop()
+    _in.append(10)  # newline
+    for proc in (A, B, C):
+        for i in proc:
+            t, f = uqpairs[i]
+            _in.append(ord(t))
+            _in.append(ord(","))
+            _in += [ord(c) for c in str(f)]
+            _in.append(ord(","))
+        _in.pop()
+        _in.append(10)
+    _in += [ord("n"), ord("\n")]
+    prog[0] = 2
+    out = execute_collect(prog, _in)
+    return out[-1]
+
+
 def main():
     tests()
     with open("in.txt", "r") as f:
         prog = [int(i) for i in f.readlines()[0].split(",")]
         assert p1(prog[:]) == 3888
+        assert p2(prog[:]) == 927809
 
 
 if __name__ == "__main__":
