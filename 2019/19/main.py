@@ -141,11 +141,78 @@ def p1(prog):
     return total
 
 
+def find_right_edge(prog, x, y):
+    # bin search for rightmost x such that (x,y) in beam
+    # given (x,y) should already be in the beam
+    assert execute_collect(prog[:], [y, x])[0] == 1
+    left = x
+    right = 1e6
+    while left < right:
+        mx = (left + right) // 2
+        in_beam = execute_collect(prog[:], [y, mx])[0]
+        if in_beam:
+            left = mx + 1
+        else:
+            right = mx
+    return left - 1
+
+
+def get_corner_if_fits(prog, y, size):
+    # an x we know should be inside the beam for this y
+    midx = int(0.66 * y)
+    assert execute_collect(prog[:], [y, midx])[0] == 1
+    # bin search for right edge maxx
+    maxx = find_right_edge(prog, midx, y)
+    assert execute_collect(prog[:], [y, maxx])[0] == 1
+    assert execute_collect(prog[:], [y, maxx + 1])[0] == 0
+    # once found, candidate top left corner = (maxx - 100,y)
+    cornerx = maxx - (size - 1)
+    # probe (maxx-100,y+100): if get back 1, the square fits
+    in_beam = (
+        execute_collect(prog[:], [y + size - 1, cornerx])[0] == 1
+        and execute_collect(prog[:], [y, maxx])[0] == 1
+    )
+    if in_beam:
+        return cornerx
+    return None
+
+
+def check_ans(prog, x, y, size):
+    return (
+        execute_collect(prog[:], [y + size - 1, x])[0] == 1
+        and execute_collect(prog[:], [y, x + size - 1])[0] == 1
+        and execute_collect(prog[:], [y, x])[0] == 1
+        and execute_collect(prog[:], [y + size - 1, x + size - 1])[0] == 1
+    )
+
+
+def p2(prog):
+    size = 100
+    miny = 0
+    maxy = 1e6
+    # binary_search on y
+    ansy = maxy
+    while miny < maxy:
+        midy = (maxy + miny) // 2
+        if get_corner_if_fits(prog, midy, size):
+            maxy = midy
+            ansy = midy
+        else:
+            miny = midy + 1
+    ansx = get_corner_if_fits(prog, ansy, size)
+    assert check_ans(prog, ansx, ansy, size)
+    return int(ansy * 10000 + ansx)
+
+
 def main():
     tests()
     with open("in.txt", "r") as f:
         prog = [int(i) for i in f.readlines()[0].split(",")]
-        assert p1(prog[:]) == 147
+        # assert p1(prog[:]) == 147
+        print(p2(prog[:]))
+        # 8711337 is too low
+        # 8741342 is too low
+        # 9331439 is too low
 
 
 if __name__ == "__main__":
