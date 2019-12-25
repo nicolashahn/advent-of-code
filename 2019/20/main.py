@@ -60,6 +60,56 @@ def p1(grid, p2c):
     return float("inf")
 
 
+def is_outer(grid, x, y):
+    return y in (2, len(grid) - 3) or x in (2, len(grid[0]) - 3)
+
+
+def split_portals(grid, p2c):
+    inner, outer = {}, {}
+    for p, xys in p2c.items():
+        for (x, y) in xys:
+            if is_outer(grid, x, y):
+                outer[p] = (x, y)
+            else:
+
+                inner[p] = (x, y)
+    assert len(outer) == (len(inner) + 2)  # AA and ZZ always outer
+    return inner, outer
+
+
+def p2(grid, p2c):
+    sxy = p2c["AA"][0]
+    exy = p2c["ZZ"][0]
+    # portals represented as mapping of coordinate to coordinate
+    c2c = {}
+    for _, xys in p2c.items():
+        if len(xys) > 1:
+            xy1, xy2 = xys
+            c2c[xy1] = xy2
+            c2c[xy2] = xy1
+
+    q = deque([((sxy, 0), 0)])
+    seen = set()
+    while q:
+        ((x, y), lv), d = q.popleft()
+        if (x, y) == exy and lv == 0:
+            return d
+        seen.add(((x, y), lv))
+        nxylvs = [
+            ((nx, ny), lv)
+            for nx, ny in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+            if grid[ny][nx] == "."
+        ]
+        if (x, y) in c2c:
+            nlv = (lv - 1) if is_outer(grid, x, y) else (lv + 1)
+            if nlv >= 0:
+                nxylvs.append((c2c[x, y], nlv))
+        for nxylv in nxylvs:
+            if nxylv not in seen:
+                q.append((nxylv, d + 1))
+    return float("inf")
+
+
 def tests():
     pass
     in1 = """         A           
@@ -125,9 +175,10 @@ YN......#               VT..#....QG
 def main():
     tests()
     with open("in.txt", "r") as f:
-        raw = f.read()
+        raw = f.read().strip("\n")
         grid, p2c = parse(raw)
-        print(p1(grid, p2c))
+        assert p1(grid, p2c) == 482
+        print(p2(grid, p2c))
 
 
 if __name__ == "__main__":
