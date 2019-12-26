@@ -139,7 +139,6 @@ def printgrid(grid, inters=None):
         inters = []
     maxx = max([x for x, y in grid])
     maxy = max([y for x, y in grid])
-    print(maxx, maxy)
     for y in range(maxy + 1):
         row = ""
         for x in range(maxx + 1):
@@ -179,7 +178,7 @@ def p1(prog):
 R = "R"
 L = "L"
 
-
+# NOTE: p2 only works using python2, not python3 - TODO look into this
 def p2(prog):
     # hand-transcribed T_T
     path = eval(
@@ -205,29 +204,20 @@ def p2(prog):
     [2, 0, 0, 4, 1, 2, 2, 0, 0, 1, 2, 3, 4, 4, 1, 2, 1, 2, 3, 4, 4, 1, 2,
      1, 2, 3, 4, 2, 0, 0, 1, 2, 3, 4]
     """
+    # these were done by hand as well
     A = [2, 0, 0]
     B = [4, 1, 2]
     C = [1, 2, 3, 4]
     main = ["A", "B", "A", "C", "B", "C", "B", "C", "A", "C"]
     # enter input to program
-    _in = []
-    for f in main:
-        _in.append(ord(f))
-        _in.append(ord(","))
-    _in.pop()
-    _in.append(10)  # newline
+    _in = ",".join(main) + "\n"
     for proc in (A, B, C):
-        for i in proc:
-            t, f = uqpairs[i]
-            _in.append(ord(t))
-            _in.append(ord(","))
-            _in += [ord(c) for c in str(f)]
-            _in.append(ord(","))
-        _in.pop()
-        _in.append(10)
-    _in += [ord("n"), ord("\n")]
+        pairs = ["{},{}".format(*uqpairs[i]) for i in proc]
+        _in += ",".join(pairs) + "\n"
+    _in += "n\n"
+    ord_in = [ord(i) for i in _in]
     prog[0] = 2
-    out = execute_collect(prog, _in)
+    out = execute_collect(prog, ord_in)
     return out[-1]
 
 
