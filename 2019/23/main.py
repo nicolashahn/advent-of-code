@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
+from time import sleep
 
 
 def execute(prog, in_gen):
@@ -142,6 +143,9 @@ class Buffer:
         self.addr = addr
         self.buf = deque([addr])
 
+    def __repr__(self):
+        return "<Buffer {}: {}>".format(self.addr, list(self.buf))
+
     def __iter__(self):
         return self
 
@@ -150,8 +154,14 @@ class Buffer:
             return self.buf.popleft()
         return -1
 
+    def __len__(self):
+        return len(self.buf)
+
     def push(self, val):
         self.buf.append(val)
+
+    def is_empty(self):
+        return len(self.buf) == 0
 
 
 class NIC:
@@ -165,8 +175,9 @@ class NIC:
             addr = next(self.comp)
             x = next(self.comp)
             y = next(self.comp)
-            if addr == 255:
-                print("ANSWER TO PART 1: {}".format(y))
+            print("sending to address {} values {}, {}".format(addr, x, y))
+            # if addr == 255:
+            #     print("ANSWER TO PART 1: {}".format(y))
             self.buffer_map[addr].push(x)
             self.buffer_map[addr].push(y)
 
@@ -190,12 +201,55 @@ def p1(prog):
             futures[i] = thread_exec.submit(nic.run)
 
 
+class NAT:
+    def __init__(self, buffer_map):
+        self.bs = buffer_map
+        self.buf = self.bs[255]
+        self.history = []
+
+    def run(self):
+        print("NAT.run called")
+        while True:
+            if (
+                all([b.is_empty() for i, b in self.bs.items() if i != 255])
+                and len(self.buf) > 1
+            ):
+                while len(self.buf) > 2:
+                    next(self.buf)
+                print(self.buf)
+                x = next(self.buf)
+                y = next(self.buf)
+                print("NAT sending {}, {}".format(x, y))
+                if [x, y] == self.history[-2:]:
+                    print("ANSWER TO PART 2: {}".format(y))
+                self.history += [x, y]
+                self.bs[0].push(x)
+                self.bs[0].push(y)
+            sleep(0.000000000001)
+
+
+def p2(prog):
+    N = 50
+    buffers = {addr: Buffer(addr) for addr in range(N)}
+    buffers[255] = Buffer(255)
+    _ = next(buffers[255])  # throw away first input that NICs need but NAT doesn't
+    nics = [NIC(prog[:], addr, buffers) for addr in range(N)]
+    with ThreadPoolExecutor(max_workers=len(buffers)) as thread_exec:
+        print("starting NIC execution...")
+        futures = {}
+        nat = NAT(buffers)
+        futures[255] = thread_exec.submit(nat.run)
+        for i, nic in enumerate(nics):
+            futures[i] = thread_exec.submit(nic.run)
+
+
 def main():
     intcode_tests()
     buffer_tests()
     with open("in.txt", "r") as f:
         prog = [int(i) for i in f.readlines()[0].split(",")]
-        print(p1(prog[:]))
+        # print(p1(prog[:]))
+        print(p2(prog[:]))
 
 
 if __name__ == "__main__":
