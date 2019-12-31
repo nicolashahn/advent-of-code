@@ -148,12 +148,25 @@ WALK
     return outstr
 
 
+# @ABCDEFGHI
+# _   _   _
+# _   __   _
+# jump if (any of A,B,C are False) and (D is True and (E or H is True))
+
+
 def p2(prog):
-    script = """
-# TODO
+    script = """NOT C T
+NOT B J
+OR J T
+NOT T J
+NOT A J
+OR J T
+AND D T
+OR E J
+OR H J
+AND T J
 RUN
 """
-
     script_ord = [ord(c) for c in script]
     out = execute_collect(prog, script_ord)
     outstr = "".join([chr(o) if o < 256 else str(o) for o in out])
@@ -164,8 +177,8 @@ def main():
     intcode_tests()
     with open("in.txt", "r") as f:
         prog = [int(i) for i in f.readlines()[0].split(",")]
-        print(p1(prog[:]))
-        print(p2(prog[:]))
+        print(p1(prog[:]))  # 19348840
+        print(p2(prog[:]))  # 1141857182
 
 
 if __name__ == "__main__":
