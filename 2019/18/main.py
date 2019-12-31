@@ -64,7 +64,10 @@ def getallkeydists(grid, key_xys, door_xys):
     return kdists
 
 
-def findallkeys(grid, sxys, key_xys, door_xys):
+# NOTE this doesn't make a lot of sense because it's halfway converted to allow for
+# multiple robot positions. I gave up on that and started fresh in p2().  Didn't change
+# it back because it works as-is and this is not code I plan on maintaining.
+def p1(grid, sxys, key_xys, door_xys):
     """ Given a starting point, find the len of the shortest path to find all keys """
     allkeys = set(key_xys.keys())
     kdists = getallkeydists(grid, key_xys, door_xys)
@@ -93,8 +96,36 @@ def findallkeys(grid, sxys, key_xys, door_xys):
     return best
 
 
-def p1(grid, sxy, key_xys, door_xys):
-    return findallkeys(grid, sxy, key_xys, door_xys)
+def p2(grid, sxys, key_xys, door_xys):
+    """ Same as p1, but with multiple robot positions per state """
+    allkeys = set(key_xys.keys())
+    for i, sxy in enumerate(sxys):
+        key_xys["@{}".format(i)] = sxy
+    kdists = getallkeydists(grid, key_xys, door_xys)
+
+    start_ks = tuple("@{}".format(i) for i in range(len(sxys)))
+    held = frozenset()
+
+    @lru_cache(None)
+    def recfind(ks, held):
+        for k in ks:
+            if k in ALPHA:
+                held = held | {k}
+        if len(held) == len(allkeys):
+            return 0
+        best = float("inf")
+        for nk in allkeys - held:
+            for i, k in enumerate(ks):
+                dist, doors = kdists[frozenset((k, nk))]
+                if dist < float("inf") and all(
+                    [door.lower() in held for door in doors]
+                ):
+                    newks = list(ks)
+                    newks[i] = nk
+                    best = min(best, recfind(tuple(newks), held) + dist)
+        return best
+
+    return recfind(start_ks, held)
 
 
 def updategridp2(grid):
@@ -147,11 +178,11 @@ def tests():
 ########.########
 #l.F..d...h..C.m#
 #################""".strip()
-    assert findallkeys(*parse(in1)) == 5
-    assert findallkeys(*parse(in2)) == 8
-    assert findallkeys(*parse(in3)) == 86
-    assert findallkeys(*parse(in4)) == 132
-    assert findallkeys(*parse(in5)) == 136
+    assert p1(*parse(in1)) == 5
+    assert p1(*parse(in2)) == 8
+    assert p1(*parse(in3)) == 86
+    assert p1(*parse(in4)) == 132
+    assert p1(*parse(in5)) == 136
 
     print("tests passed")
 
@@ -162,7 +193,8 @@ def main():
         raw = f.read().strip()
         grid, sxys, key_xys, door_xys = parse(raw)
         assert p1(grid, sxys, key_xys, door_xys) == 7430
-        # print(p2(p2grid, p2sxys, key_xys, door_xys))
+        p2grid, p2sxys = updategridp2(grid)
+        assert p2(p2grid, p2sxys, key_xys, door_xys) == 1864
 
 
 if __name__ == "__main__":
