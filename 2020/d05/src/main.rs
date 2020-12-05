@@ -1,24 +1,16 @@
 use std::collections::HashSet;
 
 fn get_row_col(seat: &str) -> (usize, usize) {
-    let chars = seat.chars().collect::<Vec<_>>();
-    let mut row = 0;
-    let mut col = 0;
+    let chars = seat.chars().rev().collect::<Vec<_>>();
 
-    let mut p = 64;
-    for i in 0..7 {
-        if chars[i] == 'B' {
-            row += p;
-        }
-        p /= 2;
-    }
-    let mut p = 4;
-    for i in 7..10 {
-        if chars[i] == 'R' {
-            col += p;
-        }
-        p /= 2;
-    }
+    let col = (0..3)
+        .filter(|i| chars[*i] == 'R')
+        .map(|i| usize::pow(2, i as u32))
+        .sum();
+    let row = (3..10)
+        .filter(|i| chars[*i] == 'B')
+        .map(|i| usize::pow(2, i as u32 - 3))
+        .sum();
 
     (row, col)
 }
