@@ -30,25 +30,33 @@ fn p1(seats: &Vec<&str>) -> usize {
         .unwrap()
 }
 
-fn p2(seats: &Vec<&str>) {
+fn p2(seats: &Vec<&str>) -> usize {
     let row_cols = seats
         .iter()
         .map(|&s| get_row_col(s))
         .collect::<HashSet<_>>();
 
+    let mut first_block = false;
     for r in 0..128 {
         for c in 0..8 {
-            if !row_cols.contains(&(r, c)) {
-                println!("{}", get_id(r, c))
+            // if seat is filled
+            if row_cols.contains(&(r, c)) {
+                // entered first block of contiguous seats
+                first_block = true;
+            } else {
+                // found the first empty seat after the first block
+                if first_block {
+                    return get_id(r, c);
+                }
             }
         }
     }
+    panic!("oops")
 }
 
 fn main() {
     let input = std::fs::read_to_string("./input").unwrap();
-    let seats = input.split("\n").filter(|&s| s != "").collect::<Vec<_>>();
+    let seats = input.lines().collect::<Vec<_>>();
     println!("p1 {:?}", p1(&seats));
-    // inspect output manually and look for the odd number out
-    p2(&seats);
+    println!("p2 {:?}", p2(&seats));
 }
