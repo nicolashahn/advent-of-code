@@ -8,12 +8,10 @@ struct Coord4(i64, i64, i64, i64);
 
 trait Adjacents
 where
-    Self: Eq + std::hash::Hash + Copy,
+    Self: std::marker::Sized + Eq + std::hash::Hash + Copy,
 {
     /// Get all adjacent coordinates to this one (in all dimensions)
-    fn get_adj(&self) -> Vec<Self>
-    where
-        Self: std::marker::Sized;
+    fn get_adj(&self) -> Vec<Self>;
 }
 
 impl Adjacents for Coord3 {
